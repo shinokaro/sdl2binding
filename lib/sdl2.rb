@@ -7,4 +7,5 @@ module SDL2
   include Fiddle::BasicTypes
   lp = File.join(File.expand_path(File.dirname(__FILE__)), "sdl2/include")
   Dir.each_child(lp) { |child| require_relative File.join(lp, child) }
+  require_relative 'sdl2/audio_device'
 end
