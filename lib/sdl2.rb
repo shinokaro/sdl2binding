@@ -43,7 +43,7 @@ module SDL2
   end
   module_function :was_init
 
-  def quit(void)
+  def quit
     SDL2.SDL_Quit
   end
   module_function :quit
