@@ -1,105 +1,23 @@
-require_relative 'window/display_mode'
+require_relative 'pointer'
+require_relative 'helper'
+require_relative 'display_mode'
+require_relative 'pixel_format'
+require_relative 'rect'
+require_relative 'surface'
 
 module SDL2
   class Window
 
+    extend Helper
+
     class << self
-      def current_video_driver
-        char_ptr = SDL2.SDL_GetCurrentVideoDriver
-        (char_ptr.to_i == 0) ? nil : char_ptr.to_s
-      end
-
-      def num_video_drivers
-        num = SDL2.SDL_GetNumVideoDrivers
-        raise "#{SDL2.SDL_GetError}" if num < 0
-        num
-      end
-
-      def video_driver(index)
-        char = SDL2.SDL_GetVideoDriver(index)
-        (char.to_i == 0) ? nil : char.to_s
-      end
-      #
-      # Displays
-      #
-      def num_video_displays
-        num = SDL2.SDL_GetNumVideoDisplays
-        raise "#{SDL2.SDL_GetError}" if num < 0
-        num
-      end
-
-      def display_name(display_index)
-        char = SDL2.SDL_GetDisplayName(display_index)
-        raise "#{SDL2.SDL_GetError}" if char.to_i == 0
-        char.to_s
-      end
-
-      def display_bounds(display_index)
-        rect = SDL2::SDL_Rect.malloc
-        error = SDL2.SDL_GetDisplayBounds(display_index, rect)
-        raise "#{SDL2.SDL_GetError}" if error < 0
-        rect
-      end
-
-      def display_usable_bounds(display_index)
-        rect = SDL2::SDL_Rect.malloc
-        error = SDL2.SDL_GetDisplayUsableBounds(display_index, rect)
-        raise "#{SDL2.SDL_GetError}" if error < 0
-        rect
-      end
-
-      def display_dpi(display_index)
-        ddpi = Fiddle::Pointer.malloc(Fiddle::SIZEOF_FLOAT)
-        hdpi = Fiddle::Pointer.malloc(Fiddle::SIZEOF_FLOAT)
-        vdpi = Fiddle::Pointer.malloc(Fiddle::SIZEOF_FLOAT)
-        error = SDL2.SDL_GetDisplayDPI(display_index, ddpi, hdpi, vdpi)
-        raise "#{SDL2.SDL_GetError}" if error < 0
-        [ddpi, hdpi, vdpi]
-      end
-
-      def num_display_modes(display_index)
-        num = SDL2.SDL_GetNumDisplayModes(display_index)
-        raise "#{SDL2.SDL_GetError}" if num < 0
-        num
-      end
-
-      def display_mode(display_index, mode_index)
-        mode = DisplayMode.new
-        error = SDL2.SDL_GetDisplayMode(display_index, mode_index, mode)
-        raise "#{SDL2.SDL_GetError}" if error < 0
-        mode
-      end
-
-      def desktop_display_mode(display_index)
-        mode = DisplayMode.new
-        error = SDL2.SDL_GetDesktopDisplayMode(display_index, mode)
-        raise "#{SDL2.SDL_GetError}" if error < 0
-        mode
-      end
-
-      def current_display_mode(display_index)
-        mode = DisplayMode.new
-        error = SDL2.SDL_GetCurrentDisplayMode(display_index, mode)
-        raise "#{SDL2.SDL_GetError}" if error < 0
-        mode
-      end
-
-      def closest_display_mode(display_index, mode)
-        closest = DisplayMode.new
-        error = SDL2.SDL_GetClosestDisplayMode(display_index, mode, closest)
-        raise "#{SDL2.SDL_GetError}" if error.to_i == 0
-        closest
-      end
-      #
-      #
-      #
       def grabbed_window
-        window = SDL_Window *SDL_GetGrabbedWindow
-        (window.to_i == 0) ? nil : window
+        window = SDL2.SDL_GetGrabbedWindow
+        (window == Fiddle::NULL) ? nil : window
       end
 
       def screen_saver?
-        SDL2::SDL_bool[SDL2.SDL_IsScreenSaverEnabled]
+        SDL_bool[SDL2.SDL_IsScreenSaverEnabled]
       end
 
       def enable_screen_saver
@@ -112,13 +30,13 @@ module SDL2
 
       def window_from_id(window_id)
         window = SDL2.SDL_GetWindowFromID(window_id)
-        raise "#{SDL2.SDL_GetError}" if window.to_i == 0
+        raise Error, error_msg if window == Fiddle::NULL
         window
       end
 
       def create_window_from(data)
         window = SDL2.SDL_CreateWindowFrom(data)
-        raise "#{SDL2.SDL_GetError}" if window.to_i == 0
+        raise Error, error_msg if window == Fiddle::NULL
         window
       end
 
@@ -132,36 +50,38 @@ module SDL2
               popup_menu: false, vulkan: false)
 
         flags = [
-            fullscreen         && SDL2::SDL_WINDOW_FULLSCREEN,
-            opengl             && SDL2::SDL_WINDOW_OPENGL,
-            hidden             && SDL2::SDL_WINDOW_HIDDEN,
-            borderless         && SDL2::SDL_WINDOW_BORDERLESS,
-            resizable          && SDL2::SDL_WINDOW_RESIZABLE,
-            minimized          && SDL2::SDL_WINDOW_MINIMIZED,
-            maximized          && SDL2::SDL_WINDOW_MAXIMIZED,
-            grabbed            && SDL2::SDL_WINDOW_INPUT_GRABBED,
-            input_focus        && SDL2::SDL_WINDOW_INPUT_FOCUS,
-            mouse_focus        && SDL2::SDL_WINDOW_MOUSE_FOCUS,
-            fullscreen_desktop && SDL2::SDL_WINDOW_FULLSCREEN_DESKTOP,
-            foreign            && SDL2::SDL_WINDOW_FOREIGN,
-            allow_highdpi      && SDL2::SDL_WINDOW_ALLOW_HIGHDPI,
-            mouse_capture      && SDL2::SDL_WINDOW_MOUSE_CAPTURE,
-            always_on_top      && SDL2::SDL_WINDOW_ALWAYS_ON_TOP,
-            skip_taskbar       && SDL2::SDL_WINDOW_SKIP_TASKBAR,
-            utility            && SDL2::SDL_WINDOW_UTILITY,
-            tooltip            && SDL2::SDL_WINDOW_TOOLTIP,
-            popup_menu         && SDL2::SDL_WINDOW_POPUP_MENU,
-            vulkan             && SDL2::SDL_WINDOW_VULKAN
+            fullscreen         && SDL_WINDOW_FULLSCREEN,
+            opengl             && SDL_WINDOW_OPENGL,
+            hidden             && SDL_WINDOW_HIDDEN,
+            borderless         && SDL_WINDOW_BORDERLESS,
+            resizable          && SDL_WINDOW_RESIZABLE,
+            minimized          && SDL_WINDOW_MINIMIZED,
+            maximized          && SDL_WINDOW_MAXIMIZED,
+            grabbed            && SDL_WINDOW_INPUT_GRABBED,
+            input_focus        && SDL_WINDOW_INPUT_FOCUS,
+            mouse_focus        && SDL_WINDOW_MOUSE_FOCUS,
+            fullscreen_desktop && SDL_WINDOW_FULLSCREEN_DESKTOP,
+            foreign            && SDL_WINDOW_FOREIGN,
+            allow_highdpi      && SDL_WINDOW_ALLOW_HIGHDPI,
+            mouse_capture      && SDL_WINDOW_MOUSE_CAPTURE,
+            always_on_top      && SDL_WINDOW_ALWAYS_ON_TOP,
+            skip_taskbar       && SDL_WINDOW_SKIP_TASKBAR,
+            utility            && SDL_WINDOW_UTILITY,
+            tooltip            && SDL_WINDOW_TOOLTIP,
+            popup_menu         && SDL_WINDOW_POPUP_MENU,
+            vulkan             && SDL_WINDOW_VULKAN
         ].select(&:itself).inject(0, :|)
 
         window = SDL2.SDL_CreateWindow(title, x, y, w, h, flags)
-        raise "#{SDL2.SDL_GetError}" if window.to_i == 0
+        raise Error, error_msg if window == Fiddle::NULL
 
         ObjectSpace.define_finalizer(window, proc { SDL2.SDL_DestroyWindow(window) } )
 
         super(window)
       end
     end
+
+    include Helper
 
     def initialize(window)
       @window ||= window
@@ -175,46 +95,46 @@ module SDL2
       SDL2.SDL_GetWindowData(@window, name) #=> void pointer
     end
 
-    def display_index
-      SDL2.SDL_GetWindowDisplayIndex(@window)
+    def display
+      Display.new(SDL2.SDL_GetWindowDisplayIndex(@window))
     end
 
     def fullscreen_display_mode=(mode)
       error = SDL2.SDL_SetWindowDisplayMode(@window, mode)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
     end
 
     def fullscreen_display_mode
-      mode = DisplayMode.new
+      mode = SDL_DisplayMode.new
       error = SDL2.SDL_GetWindowDisplayMode(@window, mode)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
       mode
     end
 
     def fullscreen
-      error = SDL2.SDL_SetWindowFullscreen(@window, SDL2::SDL_WINDOW_FULLSCREEN)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      error = SDL2.SDL_SetWindowFullscreen(@window, SDL_WINDOW_FULLSCREEN)
+      raise Error, error_msg if error < 0
     end
 
     def fullscreen_desktop
-      error = SDL2.SDL_SetWindowFullscreen(@window, SDL2::SDL_WINDOW_FULLSCREEN_DESKTOP)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      error = SDL2.SDL_SetWindowFullscreen(@window, SDL_WINDOW_FULLSCREEN_DESKTOP)
+      raise Error, error_msg if error < 0
     end
 
     def window_mode
       error = SDL2.SDL_SetWindowFullscreen(@window, 0)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
     end
 
     def pixel_format
       pixel_format = SDL2.SDL_GetWindowPixelFormat(@window)
-      raise "#{SDL2.SDL_GetError}" if pixel_format == SDL2::SDL_PIXELFORMAT_UNKNOWN
-      pixel_format
+      raise Error, error_msg if pixel_format == SDL_PIXELFORMAT_UNKNOWN
+      PixelFormat.new(pixel_format)
     end
 
     def window_id
       id = SDL2.SDL_GetWindowID(@window)
-      raise "#{SDL2.SDL_GetError}" if id == 0
+      raise Error, error_msg if id == 0
       id
     end
 
@@ -238,34 +158,33 @@ module SDL2
 
     def position=(x_y)
       x, y = x_y
-      SDL2.SDL_SetWindowPosition(@window, x || SDL2::SDL_WINDOWPOS_CENTERED[], y || SDL2::SDL_WINDOWPOS_CENTERED[])
+      SDL2.SDL_SetWindowPosition(@window, x || SDL_WINDOWPOS_CENTERED, y || SDL_WINDOWPOS_CENTERED)
     end
 
     def position
-      x = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
-      y = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      x, y = IntPointer.new, IntPointer.new
       SDL2.SDL_GetWindowPosition(@window, x, y)
-      [x.to_str.unpack('l!')[0], y.to_str.unpack('l!')[0]]
+      [x.value, y.value]
     end
 
     def x=(x)
-      SDL2.SDL_SetWindowPosition(@window, x || SDL2::SDL_WINDOWPOS_CENTERED[], SDL2::SDL_WINDOWPOS_UNDEFINED[])
+      SDL2.SDL_SetWindowPosition(@window, x || SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_UNDEFINED)
     end
 
     def x
-      x = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      x = IntPointer.new
       SDL2.SDL_GetWindowPosition(@window, x, nil)
-      x.to_str.unpack('l!')[0]
+      x.value
     end
 
     def y=(y)
-      SDL2.SDL_SetWindowPosition(@window, SDL2::SDL_WINDOWPOS_UNDEFINED[], y || SDL2::SDL_WINDOWPOS_CENTERED[])
+      SDL2.SDL_SetWindowPosition(@window, SDL_WINDOWPOS_UNDEFINED, y || SDL_WINDOWPOS_CENTERED)
     end
 
     def y
-      y = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      y = IntPointer.new
       SDL2.SDL_GetWindowPosition(@window, nil, y)
-      y.to_str.unpack('l!')[0]
+      y.value
     end
 
     def size=(w, h)
@@ -273,24 +192,23 @@ module SDL2
     end
 
     def size
-      w = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
-      h = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      w, h = IntPointer.new, IntPointer.new
       SDL2.SDL_GetWindowSize(@window, w, h)
-      [w.to_str.unpack('l!')[0], h.to_str.unpack('l!')[0]]
+      [w.value, h.value]
     end
 
     def w
-      w = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      w = IntPointer.new
       SDL2.SDL_GetWindowSize(@window, w, nil)
-      w.to_str.unpack('l!')[0]
+      w.value
     end
 
     alias width w
 
     def h
-      h = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      h = IntPointer.new
       SDL2.SDL_GetWindowSize(@window, nil, h)
-      h.to_str.unpack('l!')[0]
+      h.value
     end
 
     alias height h
@@ -301,11 +219,9 @@ module SDL2
     end
 
     def minimum_size
-      w = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
-      h = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
-      Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      w, h = IntPointer.new, IntPointer.new
       SDL2.SDL_GetWindowMinimumSize(@window, w, h)
-      [w.to_str.unpack('l!')[0], h.to_str.unpack('l!')[0]]
+      [w.value, h.value]
     end
 
     def maximum_size=(max_w_h)
@@ -314,10 +230,9 @@ module SDL2
     end
 
     def maximum_size
-      w = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
-      h = Fiddle::Pointer.malloc(Fiddle::SIZEOF_INT)
+      w, h = IntPointer.new, IntPointer.new
       SDL2.SDL_GetWindowMaximumSize(@window, w, h)
-      [w.to_str.unpack('l!')[0], h.to_str.unpack('l!')[0]]
+      [w.value, h.value]
     end
 
     def borderd=(bordered)
@@ -336,7 +251,7 @@ module SDL2
       SDL2.SDL_HideWindow(@window)
     end
 
-    def raise
+    def raise_window
       SDL2.SDL_RaiseWindow(@window)
     end
 
@@ -354,19 +269,21 @@ module SDL2
 
     def surface
       surface = SDL2.SDL_GetWindowSurface(@window)
-      raise "#{SDL2.SDL_GetError}" if surface.to_i == 0
-      surface
+      raise Error, error_msg if surface == Fiddle::NULL
+      Surface.new(surface)
     end
 
     def update_window_surface
       error = SDL2.SDL_UpdateWindowSurface(@window)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
       self
     end
 
-    def update_window_surface_rects(*rects)
+    alias update update_window_surface
+
+    def update_window_surface_rects(rects)
       error = SDL2.SDL_UpdateWindowSurfaceRects(@window, rects. rects.size)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
       self
     end
 
@@ -375,19 +292,19 @@ module SDL2
     end
 
     def grab
-      SDL2::SDL_bool[SDL2.SDL_GetWindowGrab(@window)]
+      SDL_bool[SDL2.SDL_GetWindowGrab(@window)]
     end
 
     def opacity=(opacity)
       error = SDL2.SDL_SetWindowOpacity(@window, opacity.to_f)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error != -1 && error < 0
     end
 
     def opacity
-      out_opacity = Fiddle::Pointer.malloc(Fiddle::SIZEOF_FLOAT)
+      out_opacity = FloatPointer.new
       error = SDL2.SDL_GetWindowOpacity(@window, out_opacity)
-      raise "#{SDL2.SDL_GetError}" if error < 0
-      out_opacity.to_str.unpack('f')[0]
+      raise Error, error_msg if error < 0
+      out_opacity.value
     end
     #
     # X11 only
@@ -403,7 +320,7 @@ module SDL2
     #
     def window_brightness=(brightness)
       error = SDL2.SDL_SetWindowBrightness(@window, brightness.to_f)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
     end
 
     def window_brightness
@@ -411,22 +328,16 @@ module SDL2
     end
 
     def window_gamma_ramp=(gamma_maps)
-      size = 256
-      format = "S#{size}"
-      red, green, blue = gamma_maps.map { |ary| ary.pack(format) }
+      red, green, blue = gamma_maps.map { |ary| ary.pack('S!256') }
       error = SDL2.SDL_SetWindowGammaRamp(@window, red, green, blue)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
     end
 
     def window_gamma_ramp
-      size = 256
-      red   = Fiddle::Pointer.malloc(Fiddle::SIZEOF_SHORT * size)
-      green = Fiddle::Pointer.malloc(Fiddle::SIZEOF_SHORT * size)
-      blue  = Fiddle::Pointer.malloc(Fiddle::SIZEOF_SHORT * size)
+      red, green, blue = GammaRampPointer.new, GammaRampPointer.new, GammaRampPointer.new
       error = SDL2.SDL_GetWindowGammaRamp(@window, red, green, blue)
-      raise "#{SDL2.SDL_GetError}" if error < 0
-      format = "S#{size}"
-      [red.to_str.unpack(format), green.to_str.unpack(format), blue.to_str.unpack(format)]
+      raise Error, error_msg if error < 0
+      [red.values, green.values, blue.values]
     end
     #
     # Hit test
@@ -438,7 +349,7 @@ module SDL2
           [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP],
           &block)
       error = SDL2.SDL_SetWindowHitTest(@window, callback, nil)
-      raise "#{SDL2.SDL_GetError}" if error < 0
+      raise Error, error_msg if error < 0
     end
 
     def destroy

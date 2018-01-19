@@ -1,28 +1,30 @@
 require_relative './lib/sdl2'
-
 window = SDL2::Window.new
 
+surface = window.surface
+surface.fill_rect(SDL2::Rect.new(w:100, h:100), 0x00ff00ff)
+window.update
 window.minimum_size = [10, 10]
 p window.minimum_size
 window.position = []
 p window.position
+p window.window_gamma_ramp
+p window.grab
 window.opacity= 0.5
-p m = window.window_gamma_ramp
-window.window_gamma_ramp = m
-p SDL2::Window.display_name(0)
-SDL2::Window.display_mode(0, 0).tap { |display_mode|
-  p display_mode.format
+window.display.current_mode.tap { |display_mode|
   p display_mode.w
   p display_mode.h
   p display_mode.refresh_rate
-  p display_mode.pixel_type
-  p display_mode.pixel_order
-  p display_mode.pixel_layout
-  p display_mode.bits_per_pixel
-  p display_mode.bytes_per_pixel
-  p display_mode.indexed?
-  p display_mode.alpha?
-  p display_mode.fourcc?
+  format = display_mode.format
+  p format.name
+  p format.type_name
+  p format.order_name
+  p format.layout_name
+  p format.bits
+  p format.bytes
+  p format.indexed?
+  p format.alpha?
+  p format.four_cc?
 }
 window.hit_test {
   p :hit
