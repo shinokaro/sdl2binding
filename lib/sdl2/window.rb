@@ -1,5 +1,4 @@
 require_relative 'pointer'
-require_relative 'helper'
 require_relative 'display_mode'
 require_relative 'pixel_format'
 require_relative 'rect'
@@ -7,8 +6,6 @@ require_relative 'surface'
 
 module SDL2
   class Window
-
-    extend Helper
 
     class << self
       def grabbed_window
@@ -30,13 +27,15 @@ module SDL2
 
       def window_from_id(window_id)
         window = SDL2.SDL_GetWindowFromID(window_id)
-        raise Error, error_msg if window == Fiddle::NULL
-        window
+        raise Error if window == Fiddle::NULL
+        o = allocate
+        o.__send__ :initialize, window
+        o
       end
 
       def create_window_from(data)
         window = SDL2.SDL_CreateWindowFrom(data)
-        raise Error, error_msg if window == Fiddle::NULL
+        raise Error if window == Fiddle::NULL
         window
       end
 
@@ -73,15 +72,13 @@ module SDL2
         ].select(&:itself).inject(0, :|)
 
         window = SDL2.SDL_CreateWindow(title, x, y, w, h, flags)
-        raise Error, error_msg if window == Fiddle::NULL
+        raise Error if window == Fiddle::NULL
 
-        ObjectSpace.define_finalizer(window, proc { SDL2.SDL_DestroyWindow(window) } )
+        # ObjectSpace.define_finalizer(window, proc { SDL2.SDL_DestroyWindow(window) } )
 
         super(window)
       end
     end
-
-    include Helper
 
     def initialize(window)
       @window ||= window
@@ -101,40 +98,40 @@ module SDL2
 
     def fullscreen_display_mode=(mode)
       error = SDL2.SDL_SetWindowDisplayMode(@window, mode)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def fullscreen_display_mode
       mode = SDL_DisplayMode.new
       error = SDL2.SDL_GetWindowDisplayMode(@window, mode)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       mode
     end
 
     def fullscreen
       error = SDL2.SDL_SetWindowFullscreen(@window, SDL_WINDOW_FULLSCREEN)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def fullscreen_desktop
       error = SDL2.SDL_SetWindowFullscreen(@window, SDL_WINDOW_FULLSCREEN_DESKTOP)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def window_mode
       error = SDL2.SDL_SetWindowFullscreen(@window, 0)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def pixel_format
       pixel_format = SDL2.SDL_GetWindowPixelFormat(@window)
-      raise Error, error_msg if pixel_format == SDL_PIXELFORMAT_UNKNOWN
+      raise Error if pixel_format == SDL_PIXELFORMAT_UNKNOWN
       PixelFormat.new(pixel_format)
     end
 
     def window_id
       id = SDL2.SDL_GetWindowID(@window)
-      raise Error, error_msg if id == 0
+      raise Error if id == 0
       id
     end
 
@@ -197,6 +194,12 @@ module SDL2
       [w.value, h.value]
     end
 
+    def w=(w)
+      SDL2.SDL_SetWindowSize(@window, w, h)
+    end
+
+    alias width= w=
+
     def w
       w = IntPointer.new
       SDL2.SDL_GetWindowSize(@window, w, nil)
@@ -204,6 +207,12 @@ module SDL2
     end
 
     alias width w
+
+    def h=(h)
+      SDL2.SDL_SetWindowSize(@window, w, h)
+    end
+
+    alias height= h=
 
     def h
       h = IntPointer.new
@@ -268,14 +277,19 @@ module SDL2
     end
 
     def surface
+      # SDL_GetWindowSurface 関数は呼び出される度に Window に変更があったか判定する。
+      # Window の変更が検知されると既存の Surface を開放し、新しい Surface を生成する。
+      # 戻り値の Surface には SDL_DONTFREE フラグがセットされている。
+      # このため SDL_FreeSurface 関数を使用しても安全である。
       surface = SDL2.SDL_GetWindowSurface(@window)
-      raise Error, error_msg if surface == Fiddle::NULL
+      raise Error if surface == Fiddle::NULL
+      p surface
       Surface.new(surface)
     end
 
     def update_window_surface
       error = SDL2.SDL_UpdateWindowSurface(@window)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       self
     end
 
@@ -283,7 +297,7 @@ module SDL2
 
     def update_window_surface_rects(rects)
       error = SDL2.SDL_UpdateWindowSurfaceRects(@window, rects. rects.size)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       self
     end
 
@@ -297,13 +311,13 @@ module SDL2
 
     def opacity=(opacity)
       error = SDL2.SDL_SetWindowOpacity(@window, opacity.to_f)
-      raise Error, error_msg if error != -1 && error < 0
+      raise Error if error != -1 && error < 0
     end
 
     def opacity
       out_opacity = FloatPointer.new
       error = SDL2.SDL_GetWindowOpacity(@window, out_opacity)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       out_opacity.value
     end
     #
@@ -320,7 +334,7 @@ module SDL2
     #
     def window_brightness=(brightness)
       error = SDL2.SDL_SetWindowBrightness(@window, brightness.to_f)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def window_brightness
@@ -330,13 +344,13 @@ module SDL2
     def window_gamma_ramp=(gamma_maps)
       red, green, blue = gamma_maps.map { |ary| ary.pack('S!256') }
       error = SDL2.SDL_SetWindowGammaRamp(@window, red, green, blue)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def window_gamma_ramp
       red, green, blue = GammaRampPointer.new, GammaRampPointer.new, GammaRampPointer.new
       error = SDL2.SDL_GetWindowGammaRamp(@window, red, green, blue)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       [red.values, green.values, blue.values]
     end
     #
@@ -349,7 +363,7 @@ module SDL2
           [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP],
           &block)
       error = SDL2.SDL_SetWindowHitTest(@window, callback, nil)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def destroy

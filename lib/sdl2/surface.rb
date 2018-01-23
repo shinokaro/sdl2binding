@@ -1,5 +1,4 @@
 require_relative 'pointer'
-require_relative 'helper'
 require_relative 'rect'
 
 module SDL2
@@ -24,7 +23,8 @@ module SDL2
       def create_surface(width, height, depth = 32, r_mask = 0, g_mask = 0, b_mask = 0, a_mask = 0)
         surface = SDL2.SDL_CreateRGBSurface(0, width, height, depth, r_mask, g_mask, b_mask, a_mask)
         raise "#{SDL2.SDL_GetError}" if surface.to_i == 0
-        surface
+        allocate
+        new(surface)
       end
       # SDL_Surface *SDL_CreateRGBSurfaceWithFormat
       def create_surface_with_format(width, height, depth, format)
@@ -59,13 +59,13 @@ module SDL2
       # key カラーキーはsurfaceのピクセル形式で, SDL_MapRGB()で生成できる
       flag = key ? SDL2::SDL_TRUE : SDL2::SDL_FALSE
       error = SDL2.SDL_SetColorKey(@surface, flag, key)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def color_key
       key = Uint32Pointer.new
       error = SDL2.SDL_GetColorKey(@surface, key)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       key.value
     end
 
@@ -82,26 +82,26 @@ module SDL2
 
     def alpha_mod=(alpha)
       error = SDL2.SDL_SetSurfaceAlphaMod(@surface, alpha)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def alpha_mod
       alpha = Uint8Pointer.new
       error = SDL2.SDL_GetSurfaceAlphaMod(@surface, alpha)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       alpha.value
     end
 
     def blend_mode=(blend_mode)
       blend_mode ||= SDL_BLENDMODE_NONE
       error = SDL2.SDL_SetSurfaceBlendMode(@surface, blend_mode)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
     end
 
     def blend_mode
       blend_mode = IntPointer.new
       error = SDL2.SDL_GetSurfaceBlendMode(@surface, blend_mode)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       blend_mode.value
     end
     #
@@ -117,7 +117,7 @@ module SDL2
     # int SDL_FillRect(SDL_Surface * dst, const SDL_Rect * rect, Uint32 color)
     def fill_rect(rect, color)
       error = SDL2.SDL_FillRect(@surface, rect, color)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       self
     end
     #
@@ -146,16 +146,19 @@ module SDL2
     #
     #
     def free
+      # SDL_FreeSurfcce 関数は危険な開放や不完全な開放を防ぐように実装されている。
+      # NULLを与えても安全である。
+      # SDL_DONTFREE フラグがある場合、開放されない。
+      # --surface の参照カウントがある場合、開放しない。（？）
+      # ロック中の場合は、ロック開放を待ってから解放し戻る。
       #
-      # Window#surface からの場合開放してはならない。
-      # その場合、ウィンドウのサイズ変更で勝手に破棄される。
-      # さて、どうする？
-      SDL_FreeSurface(@surface)
+      # Window#surface からの surface には SDL_DONTFREE フラグがセットされている。
+      SDL2.SDL_FreeSurface(@surface)
     end
 
     # def lock
     #   error = SDL2.SDL_LockSurface(@surface)
-    #   raise Error, error_msg if error < 0
+    #   raise Error if error < 0
     # end
     #
     # def unlock

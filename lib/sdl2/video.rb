@@ -8,7 +8,7 @@ module SDL2
 
       def num_drivers
         num = SDL2.SDL_GetNumVideoDrivers
-        raise Error, error_msg if num < 0
+        raise Error if num < 0
         num
       end
 

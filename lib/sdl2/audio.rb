@@ -2,7 +2,6 @@ require 'forwardable'
 require_relative 'audio_spec'
 require_relative 'audio_format'
 require_relative 'pointer'
-require_relative 'helper'
 
 module SDL2
   class Audio
@@ -24,7 +23,7 @@ module SDL2
         buf   = Fiddle::Pointer.malloc(Fiddle::SIZEOF_VOIDP, Fiddle::RUBY_FREE)
         len   = IntPointer.new
         error = SDL2.SDL_LoadWAV_RW(src, free_src, spec, buf, len)
-        raise Error, error_msg if error == Fiddle::NULL
+        raise Error if error == Fiddle::NULL
         str = buf.ptr.to_str(len.value)
         SDL2.SDL_free(buf.ptr)
         [spec, str]
@@ -39,8 +38,6 @@ module SDL2
 
     def_delegators :@audio_spec, :freq, :format, :channels
 
-    include Helper
-
     def initialize(is_capture = false, device: nil, freq: 48_000, format: 'S16', channels: 2, allowed_changes: 0)
       desired   = AudioSpec.new(freq: freq, format: format, channels: channels)
       obtained  = AudioSpec.new
@@ -50,7 +47,7 @@ module SDL2
                      capture
                    end
       device_id = SDL2.SDL_OpenAudioDevice(device && device.to_s, is_capture ? 1 : 0, desired, obtained, allowed_changes)
-      raise Error, error_msg if device_id == 0
+      raise Error if device_id == 0
 
       @audio_spec = (obtained == Fiddle::NULL) ? desired : obtained
       @device_id  = device_id
@@ -67,7 +64,7 @@ module SDL2
 
     def queue_audio(data)
       error = SDL2.SDL_QueueAudio(@device_id, data, data.size)
-      raise Error, error_msg if error < 0
+      raise Error if error < 0
       self
     end
 
