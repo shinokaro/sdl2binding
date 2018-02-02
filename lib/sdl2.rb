@@ -3,22 +3,6 @@ require 'fiddle/types'
 require 'forwardable'
 
 module SDL2
-  class Error < StandardError
-    class << self
-      def clear
-        SDL2.SDL_ClearError
-      end
-    end
-
-    def clear
-      SDL2.SDL_ClearError
-    end
-
-    def to_s
-      SDL2.SDL_GetError.to_s
-    end
-  end
-
   extend Fiddle::Importer
   dlload 'sdl2' # your SDL2 lib path
   include Fiddle::BasicTypes
@@ -27,6 +11,7 @@ module SDL2
 
   extend SingleForwardable
 
+  require_relative 'sdl2/error'
   require_relative 'sdl2/version'
   def_delegators Version,
                  :version, :revision, :revision_number
@@ -42,6 +27,9 @@ module SDL2
   require_relative 'sdl2/clipboard'
   def_delegators Clipboard,
                  :clipboard_text=, :clipboard_text, :clipboard_text?
+  require_relative 'sdl2/event'
+  require_relative 'sdl2/keyboard'
+  require_relative 'sdl2/mouse'
   require_relative 'sdl2/timer'
   def_delegators Timer,
                  :ticks_passed, :ticks, :performance_counter, :performance_frequency, :delay

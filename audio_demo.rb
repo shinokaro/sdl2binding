@@ -2,6 +2,7 @@ require_relative './lib/sdl2'
 
 # SOUND DEMO
 SDL2.init
+
 file_path = '' # your wave file
 spec, data = SDL2::Audio.load_wav(file_path)
 dev = SDL2::Audio.output_devices.first.open(freq: spec.freq, format: spec.format, channels: spec.channels)

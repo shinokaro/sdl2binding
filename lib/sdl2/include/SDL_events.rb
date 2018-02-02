@@ -162,7 +162,11 @@ module SDL2
       'Uint8 repeat',         # Non-zero if this is a key repeat
       'Uint8 padding2',
       'Uint8 padding3',
-      'SDL_Keysym keysym'     # The key that was pressed or released
+      # 'SDL_Keysym keysym'   # The key that was pressed or released
+      'SDL_Scancode scancode', # SDL physical key code - see ::SDL_Scancode for details
+      'SDL_Keycode sym',       # SDL virtual key code - see ::SDL_Keycode for details
+      'Uint16 mod',            # current key modifiers
+      'Uint32 unused'
   ])
   typealias 'SDL_KeyboardEvent', 'void*'
 
@@ -324,7 +328,6 @@ module SDL2
   ])
   typealias 'SDL_AudioDeviceEvent', 'void*'
 
-
   const_set :SDL_TouchFingerEvent, struct([
       'Uint32 type',         # ::SDL_FINGERMOTION or ::SDL_FINGERDOWN or ::SDL_FINGERUP
       'Uint32 timestamp',    # In milliseconds, populated using SDL_GetTicks()
@@ -360,7 +363,6 @@ module SDL2
       'float error',
       'float x',            # Normalized center of gesture
       'float y'             # Normalized center of gesture
-
   ])
   typealias 'SDL_DollarGestureEvent', 'void*'
 
@@ -400,7 +402,6 @@ module SDL2
       'Uint32 type',      # ::SDL_SYSWMEVENT
       'Uint32 timestamp', # In milliseconds, populated using SDL_GetTicks()
       'SDL_SysWMmsg *msg' # driver dependent data, defined in SDL_syswm.h
-
   ])
   typealias 'SDL_SysWMEvent', 'void*'
 
@@ -431,10 +432,10 @@ module SDL2
       'SDL_DollarGestureEvent dgesture',
       'SDL_DropEvent drop',
       'Uint8 padding[56]'
-])
-typealias 'SDL_Event', 'void*'
+  ])
+  typealias 'SDL_Event', 'void*'
 
-extern 'void SDL_PumpEvents(void)'
+  extern 'void SDL_PumpEvents(void)'
 
   # Enum: SDL_eventaction
   const_set :SDL_ADDEVENT,  0
