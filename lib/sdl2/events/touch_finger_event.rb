@@ -9,8 +9,8 @@ module SDL2
     extend Forwardable
 
     def_delegator :event, :timestamp
-    def_delegator :event, :touch_id,  :touchId
-    def_delegator :event, :finger_id, :fingerId
+    def_delegator :event, :touchId,  :touch_id
+    def_delegator :event, :fingerId, :finger_id
     def_delegator :event, :x
     def_delegator :event, :y
     def_delegator :event, :dx

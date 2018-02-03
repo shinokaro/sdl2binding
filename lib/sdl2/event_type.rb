@@ -54,6 +54,10 @@ module SDL2
       self.to_i === event.type.to_i
     end
 
+    def type
+      self
+    end
+
     def to_event(**attrs)
       attrs[:type] = self
       event_class.new(**attrs)

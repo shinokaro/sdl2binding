@@ -74,6 +74,7 @@ module SDL2
         window = SDL2.SDL_CreateWindow(title, x, y, w, h, flags)
         raise Error if window == Fiddle::NULL
 
+        # ptr.free Fiddle::CFunc{ SDL2.SDL_DestroyWindow(window.to_i) }
         # ObjectSpace.define_finalizer(window, proc { SDL2.SDL_DestroyWindow(window) } )
 
         super(window)

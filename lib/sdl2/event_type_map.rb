@@ -20,8 +20,8 @@ module SDL2
       @map[type.to_i]
     end
 
-    def create_event(ptr, type:)
-      self[type].event_class.new(ptr, type: type)
+    def create_event(ptr)
+      self[SDL_Event.new(ptr).type].event_class.new(ptr)
     end
 
     def create_user_event(*event_class)

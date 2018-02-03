@@ -9,7 +9,7 @@ module SDL2
     extend Forwardable
 
     def_delegator :event, :timestamp
-    def_delegator :event, :window_id, :windowID
+    def_delegator :event, :windowID, :window_id
     def_delegator :event, :which
     def_delegator :event, :button
     def_delegator :event, :state

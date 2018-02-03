@@ -9,8 +9,11 @@ module SDL2
     extend Forwardable
 
     def_delegator :event, :timestamp
-    def_delegator :event, :window_id, :windowID
-    def_delegator :event, :text # "char text[#{SDL_TEXTINPUTEVENT_TEXT_SIZE}]"  # The input text
+    def_delegator :event, :windowID, :window_id
+
+    def text
+      event.text.pack('C*').split("\0", 2).first.force_encoding('UTF-8')
+    end
   end
   #
   #

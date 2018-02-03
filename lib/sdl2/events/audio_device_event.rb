@@ -8,9 +8,30 @@ module SDL2
 
     extend Forwardable
 
+    def added?
+      type.to_i == SDL_AUDIODEVICEADDED
+    end
+
+    def removed?
+      type.to_i == SDL_AUDIODEVICEREMOVED
+    end
+
     def_delegator :event, :timestamp
     def_delegator :event, :which
+    alias audio_device_id which
     def_delegator :event, :iscapture
+
+    def capture
+      iscapture != 0
+    end
+
+    def input?
+      capture
+    end
+
+    def output?
+      !capture
+    end
   end
 
   module EventType

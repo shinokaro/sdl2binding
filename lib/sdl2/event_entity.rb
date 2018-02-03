@@ -2,10 +2,10 @@ module SDL2
   class EventEntity
     extend Forwardable
 
-    def initialize(ptr = nil, type:, **attrs)
+    def initialize(ptr = nil, type: nil, **attrs)
       @ptr   = ptr || Event.malloc
       @event = self.class.struct_class.new(@ptr)
-      @type  = EventTypeMap.instance[type]
+      @type  = EventTypeMap.instance[ptr ? @event.type : type]
       raise "event type miss match" if @type.event_class != self.class
     end
 

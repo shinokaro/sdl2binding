@@ -66,7 +66,7 @@ module SDL2
         ptr = malloc
         event = SDL_Event.new(ptr)
         res = SDL2.SDL_PollEvent(event)
-        EventTypeMap.instance.create_event(ptr, type: event.type) if res != 0
+        create(ptr) if res != 0
       end
 
       def wait
@@ -74,7 +74,7 @@ module SDL2
         event = SDL_Event.new(ptr)
         res = SDL2.SDL_WaitEvent(event)
         raise Error if res == 0
-        EventTypeMap.instance.create_event(ptr, type: event.type)
+        create(ptr)
       end
 
       def wail_with_timeout(timeout)
@@ -82,7 +82,7 @@ module SDL2
         event = SDL_Event.new(ptr)
         res = SDL2.SDL_WaitEventTimeout(event, timeout)
         raise Error if res == 0
-        EventTypeMap.instance.create_event(ptr, type: event.type)
+        create(ptr)
       end
 
       def push(event)
@@ -92,6 +92,10 @@ module SDL2
 
       def malloc
         Fiddle::Pointer.malloc(SDL_Event.size, Fiddle::RUBY_FREE)
+      end
+
+      def create(ptr)
+        EventTypeMap.instance.create_event(ptr)
       end
     end
   end

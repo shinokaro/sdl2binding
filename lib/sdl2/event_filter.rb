@@ -1,54 +1,62 @@
+require 'singleton'
+
 module SDL2
-  SDL_EventFilter = bind('int *SDL_EventFilter(void* userdata, SDL_Event* event)') { |userdata, event|
-    yield(SDL_Event.new(event), userdata) ? 1 : 0
-  }
+  class EventFilter
+    class Callback < Fiddle::Closure
+      def initialize(&block)
+        super(Fiddle::TYPE_INT, [Fiddle::TYPE_VOIDP, Fiddle::TYPE_VOIDP])
+        @proc = block
+      end
 
-  module EventFilter
-    def self.create_event_filter(&block)
-      # typedef int (* SDL_EventFilter) (void *userdata, SDL_Event * event)
+      def call(_, event)
+        @proc.call(Event.create(event)) ? 1 : 0
+      end
     end
 
-    def self.set_event_filter(filter, userdata)
-      SDL2.SDL_SetEventFilter(filter, userdata)
+    include Singleton
+
+    def initialize
+      @filter  = nil
+      @monitor = nil
+      @watcher = []
     end
 
-    def self.get_event_filter(filter, userdata)
-      # ポインター受け取りのパターン
-      # SDL_bool[SDL2.SDL_GetEventFilter(SDL_EventFilter * filter, void **userdata)]
-      # empty?
+    def filter=(filter)
+      SDL2.SDL_SetEventFilter(filter, nil)
+      @filter = filter
     end
 
-    def self.filter_events(filter, userdata)
-      SDL2.SDL_FilterEvents(filter, userdata)
-    end
-  end
+    attr_reader :filter
 
-  class EventWatch
-    def self.add_event_watch(filter, userdata)
-      SDL2.SDL_AddEventWatch(filter, userdata)
-    end
+    # def filter?
+    #   SDL2.SDL_bool[SDL2.SDL_GetEventFilter(nil, nil)]
+    # end
 
-    def self.del_event_watch(filter, userdata)
-      SDL2.SDL_DelEventWatch(filter, userdata)
+    def monitor=(filter)
+      SDL2.SDL_FilterEvents(filter, nil)
+      @monitor = filter
     end
 
-    def initialize(*userdata, proc = nil, &block)
-      proc { |userdata_ptr, event_ptr|
-        event = event_ptr.force_event_class
-        block.call(event, *userdata_ptr.value)
-      }
-      @filter   = filter
-      @userdata = userdata # pointer
-      @_userdata = userdata
+    attr_reader :monitor
+
+    def add_watcher(filter)
+      if @watcher.include?(filter)
+        false
+      else
+        SDL2.SDL_AddEventWatch(filter, nil)
+        @watcher << filter
+        true
+      end
     end
 
-    def enable
-      self.class.add_event_watch(@filter, @userdata)
-      # set_GC
-    end
-
-    def destroy
-      self.class.del_event_watch(@filter, @userdata)
+    def remove_watcher(filter)
+      if @watcher.include?(filter)
+        SDL2.SDL_DelEventWatch(@watcher, nil)
+        @watcher.delete(filter)
+        true
+      else
+        false
+      end
     end
   end
 end
