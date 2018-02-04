@@ -8,8 +8,10 @@ module SDL2
         @proc = block
       end
 
+      attr_reader :proc
+
       def call(_, event)
-        @proc.call(Event.create(event)) ? 1 : 0
+        proc.call(Event.create(event)) ? 1 : 0
       end
     end
 

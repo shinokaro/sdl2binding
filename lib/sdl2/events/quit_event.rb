@@ -1,7 +1,7 @@
 require 'forwardable'
 
 module SDL2
-  class QuitEvent
+  class QuitEvent < EventEntity
     def self.struct_class
       SDL_QuitEvent
     end
