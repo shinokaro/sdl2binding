@@ -1,8 +1,10 @@
 require_relative './lib/sdl2'
+SDL2.init_timer
+p SDL2.init_timer?
+
 p SDL2.version.to_s
 p SDL2.revision
 p SDL2.revision_number
-
 
 info = SDL2::PowerInfo.new
 p info.percent
@@ -32,7 +34,7 @@ SDL2.init
 SDL2.clipboard_text = nil
 p SDL2.clipboard_text?
 
-SDL2.delay 30000
+SDL2.delay 10000
 p SDL2.clipboard_text
 
 p SDL2.ticks

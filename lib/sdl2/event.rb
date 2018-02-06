@@ -1,9 +1,16 @@
 require 'forwardable'
 require_relative 'event_entity'
 require_relative 'event_type'
+require_relative 'init_sub_system'
 
 module SDL2
   module Event
+    extend InitSubSystem
+
+    def self.init_num
+      SDL_INIT_EVENTS
+    end
+
     class << self
       def pump
         # これは呼び出しルール、メインスレッドから、がある.。

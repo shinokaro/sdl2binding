@@ -4,7 +4,6 @@ module SDL2
       error = SDL2.SDL_SetClipboardText(text)
       raise Error if error < 0
     end
-    module_function :clipboard_text=
 
     def clipboard_text
       char = SDL2.SDL_GetClipboardText
@@ -13,11 +12,9 @@ module SDL2
       SDL2.SDL_free(char)
       test
     end
-    module_function :clipboard_text
 
     def clipboard_text?
       SDL_bool[SDL2.SDL_HasClipboardText]
     end
-    module_function :clipboard_text?
   end
 end

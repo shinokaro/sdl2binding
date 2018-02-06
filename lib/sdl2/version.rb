@@ -23,7 +23,8 @@ module SDL2
     def_delegators :@version, :major, :minor, :patch, :to_i
 
     def initialize
-      @version = SDL_version.malloc
+      @ptr = Fiddle::Pointer.malloc(SDL_version.size, Fiddle::RUBY_FREE)
+      @version = SDL_version.new(@ptr)
     end
 
     def to_s

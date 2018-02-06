@@ -1,5 +1,13 @@
+require_relative 'init_sub_system'
+
 module SDL2
   class Video
+    extend InitSubSystem
+
+    def self.init_num
+      SDL_INIT_VIDEO
+    end
+
     class << self
       def current_driver
         char = SDL2.SDL_GetCurrentVideoDriver

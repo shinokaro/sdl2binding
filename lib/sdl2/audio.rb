@@ -2,9 +2,16 @@ require 'forwardable'
 require_relative 'audio_spec'
 require_relative 'audio_format'
 require_relative 'pointer'
+require_relative 'init_sub_system'
 
 module SDL2
   class Audio
+    extend InitSubSystem
+
+    def self.init_num
+      SDL_INIT_AUDIO
+    end
+
     class << self
       def drivers
         AudioDriver.drivers
