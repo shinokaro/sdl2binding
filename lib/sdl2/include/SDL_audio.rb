@@ -16,7 +16,6 @@ module SDL2
   AUDIO_S32LSB = 0x8020 # 32-bit integer samples
   AUDIO_S32MSB = 0x9020 # As above, but big-endian byte order
   AUDIO_S32    = AUDIO_S32LSB
-
   AUDIO_F32LSB = 0x8120 # 32-bit floating point samples
   AUDIO_F32MSB = 0x9120 # As above, but big-endian byte order
   AUDIO_F32    = AUDIO_F32LSB
@@ -43,7 +42,7 @@ module SDL2
 
   SDL_MIX_MAXVOLUME = 128
 
-  typealias 'SDL_AudioFormat', 'Uint16 '
+  typealias 'SDL_AudioFormat', 'Uint16'
 
   const_set :SDL_AUDIO_MASK_BITSIZE,   0xFF
   const_set :SDL_AUDIO_MASK_DATATYPE,  (1<<8)

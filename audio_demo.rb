@@ -4,10 +4,10 @@ require_relative './lib/sdl2'
 SDL2.init
 
 file_path = '' # your wave file
-spec, data = SDL2::Audio.load_wav(file_path)
-dev = SDL2::Audio.output_devices.first.open(freq: spec.freq, format: spec.format, channels: spec.channels)
+wave = SDL2::Audio.load(file_path)
+dev = SDL2::Audio.output_devices.first.open(**wave)
 
-file = StringIO.new(data, "rb")
+file = StringIO.new(wave.data, "rb")
 
 dev.play
 sample_rate = dev.freq
@@ -15,7 +15,7 @@ byte_rate = sample_rate * 4
 duration = 0.125
 
 loop do
-  queue_size = dev.queued_audio_size
+  queue_size = dev.queued_size
   if queue_size < byte_rate
     p "QUE SIZE: #{queue_size}"
     fetch_size = sample_rate * 4

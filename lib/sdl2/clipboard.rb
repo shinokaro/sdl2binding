@@ -8,9 +8,9 @@ module SDL2
     def clipboard_text
       char = SDL2.SDL_GetClipboardText
       raise Error if char == Fiddle::NULL
-      test = char.to_s
+      text = char.to_s
       SDL2.SDL_free(char)
-      test
+      text
     end
 
     def clipboard_text?
